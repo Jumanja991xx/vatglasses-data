@@ -81,6 +81,11 @@ def create_app() -> Flask:
     load_data()
     app = Flask(__name__)
 
+    @app.route('/')
+    def index():
+        """Simple index endpoint giving usage instructions."""
+        return jsonify({'message': 'Use /airport/<ICAO> to query controllers'})
+
     @app.route('/airport/<icao>')
     def airport_endpoint(icao: str):
         controllers = get_controllers(icao)

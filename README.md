@@ -35,3 +35,17 @@ By committing changes to this repository, you acknowledge that the copyright own
 All data held in this repository is owned by Lenny Colton and is for exclusive use by the VATGlasses project. The data in this repository is not to be used for any other purposes without express, written permission.
 
 **N.B.** Data committed to this repository is immediately deployed to the VATGlasses site - please expect the project collaborators to be picky and test things thoroughly before we approve them!
+
+## Simple API Usage
+
+This repository ships with a lightweight Flask application called
+`airport_controllers_api.py`. The script exposes a small API that allows
+you to query which controller positions exist for a given airport.
+
+```bash
+python airport_controllers_api.py
+```
+
+Once running, open `http://127.0.0.1:8000/airport/<ICAO>` in your browser
+or API client, replacing `<ICAO>` with the desired airport code. The root
+endpoint `/` simply returns a short help message.
