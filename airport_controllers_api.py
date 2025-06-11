@@ -7,10 +7,14 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 # Maps from pre code to positions
 pre_to_positions: Dict[str, List[Dict[str, Any]]] = {}
+# Map from position id to position
+id_to_position: Dict[str, Dict[str, Any]] = {}
 # Store airport info
 airport_info: Dict[str, Dict[str, Any]] = {}
-# Map from airport code to relevant codes
+# Map from airport code to relevant codes (pre/sector/major)
 airport_to_codes: Dict[str, List[str]] = {}
+# Map from airport code to topdown position ids
+airport_to_topdown_ids: Dict[str, List[str]] = {}
 
 
 def load_data() -> None:
@@ -39,13 +43,14 @@ def load_data() -> None:
                     'frequency': pos.get('frequency'),
                     'type': pos.get('type'),
                 }
+                id_to_position[pid] = info
                 for code in pre_list:
                     pre_to_positions.setdefault(str(code), []).append(info)
             # Airports
             for icao, info in data.get('airports', {}).items():
                 airport_info[icao] = info
                 codes: List[str] = []
-                for key in ('pre', 'topdown', 'sector', 'major'):
+                for key in ('pre', 'sector', 'major'):
                     val = info.get(key)
                     if not val:
                         continue
@@ -54,12 +59,17 @@ def load_data() -> None:
                     else:
                         codes.append(str(val))
                 airport_to_codes[icao] = codes
+                topdown = info.get('topdown', [])
+                if not isinstance(topdown, list):
+                    topdown = [topdown]
+                airport_to_topdown_ids[icao] = [str(v) for v in topdown if v]
 
 
 def get_controllers(airport: str) -> List[Dict[str, Any]]:
     """Return list of controllers for given airport ICAO."""
     icao = airport.upper()
     codes = airport_to_codes.get(icao, []) + [icao]
+    topdown_ids = airport_to_topdown_ids.get(icao, [])
     controllers = []
     seen = set()
     for code in codes:
@@ -74,6 +84,20 @@ def get_controllers(airport: str) -> List[Dict[str, Any]]:
                 'frequency': pos.get('frequency'),
                 'type': pos.get('type'),
             })
+    for pid in topdown_ids:
+        pos = id_to_position.get(pid)
+        if not pos:
+            continue
+        key = (pos['id'], pos.get('frequency'))
+        if key in seen:
+            continue
+        seen.add(key)
+        controllers.append({
+            'id': pos['id'],
+            'callsign': pos.get('callsign'),
+            'frequency': pos.get('frequency'),
+            'type': pos.get('type'),
+        })
     return controllers
 
 
